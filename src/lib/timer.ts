@@ -1,36 +1,39 @@
-'use strict';
-
 /**
  * super-queue Timer
  *
  * @authro Zongmin Lei <leizongmin@gmail.com>
  */
 
-const utils = require('./utils');
+import * as utils from "./utils";
 
 let counter = 0;
 
-class Timer {
+export class Timer {
+  public interval: number;
+  public list: Array<{ expire: number; callback: (expire: number) => void }>;
+  private _tid: NodeJS.Timeout | null;
+  public readonly id: number;
+  private readonly _debug: (...args: any[]) => void;
 
   /**
    * 创建Timer
    *
    * @param {Number} interval 检查周期（毫秒）
    */
-  constructor(interval) {
+  constructor(interval: number) {
     this.interval = interval || 1000;
     this.list = [];
     this._tid = null;
     this.id = counter += 1;
-    this._debug = utils.debug('timer:#' + this.id);
-    this._debug('created');
+    this._debug = utils.debug("timer:#" + this.id);
+    this._debug("created");
     this.start();
   }
 
   /**
    * 开始检查
    */
-  start() {
+  public start() {
     this._tid = setInterval(() => {
       this.check();
     }, this.interval);
@@ -39,8 +42,8 @@ class Timer {
   /**
    * 停止检查
    */
-  stop() {
-    clearInterval(this._tid);
+  public stop() {
+    clearInterval(this._tid!);
     this._tid = null;
   }
 
@@ -50,14 +53,14 @@ class Timer {
    * @param {Number} expire 秒时间戳
    * @param {Function} callback 回调函数
    */
-  add(expire, callback) {
+  public add(expire: number, callback: (expire: number) => void) {
     this.list.push({ expire, callback });
   }
 
   /**
    * 检查已到期的函数，并执行
    */
-  check() {
+  public check() {
     const now = utils.secondTimestamp();
     this.list.sort((a, b) => a.expire - b.expire);
     let i = 0;
@@ -75,11 +78,8 @@ class Timer {
   /**
    * 销毁当前Timer
    */
-  destroy() {
+  public destroy() {
     this.stop();
     this.list = [];
   }
-
 }
-
-module.exports = Timer;

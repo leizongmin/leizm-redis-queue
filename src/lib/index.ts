@@ -1,12 +1,8 @@
-'use strict';
-
 /**
  * super-queue
  *
  * @authro Zongmin Lei <leizongmin@gmail.com>
  */
-
-const Promise = require('bluebird');
 
 const BaseConsumer = exports.Consumer = require('./consumer');
 const BaseProducer = exports.Producer = require('./producer');
