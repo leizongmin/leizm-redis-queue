@@ -7,12 +7,13 @@
 import { EventEmitter } from "events";
 import * as utils from "./utils";
 import { Timer } from "./timer";
-import { Redis, RedisOptions } from "ioredis";
+import { Redis } from "ioredis";
+import { RedisOptions } from "./utils";
 
 export interface ProducerOptions {
-  heartbeat: number;
+  heartbeat?: number;
   queue: string;
-  maxAge: number;
+  maxAge?: number;
   redis: RedisOptions;
 }
 
@@ -63,7 +64,7 @@ export class Producer extends EventEmitter {
     this._redis = utils.createRedisClient(options.redis);
     this._redisSub = utils.createRedisClient(options.redis);
     this.name = utils.generateClientId("producer");
-    this._redisPrefix = (options.redis && (options.redis as any).prefix) || "";
+    this._redisPrefix = (options.redis && options.redis.prefix) || "";
     this.queue = options.queue;
     this._queueKey = utils.getQueueKey(this._redisPrefix, options.queue);
 

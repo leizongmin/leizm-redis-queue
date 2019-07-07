@@ -23,8 +23,12 @@ export function debug(name: string) {
  * @param {Object} options
  * @return {Object}
  */
-export function createRedisClient(options: Redis.RedisOptions) {
+export function createRedisClient(options: RedisOptions) {
   return new Redis(options);
+}
+
+export interface RedisOptions extends Redis.RedisOptions {
+  prefix?: string;
 }
 
 /**

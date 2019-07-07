@@ -6,7 +6,8 @@
 
 import { EventEmitter } from "events";
 import * as utils from "./utils";
-import { RedisOptions, Redis } from "ioredis";
+import { Redis } from "ioredis";
+import { RedisOptions } from "./utils";
 
 interface ConsumerInfo {
   name: string;
@@ -60,8 +61,11 @@ function parseProducerInfo(name: string, content: string): ProducerInfo {
   return ret;
 }
 
-function computeOnlineOfflineList(previous, current) {
-  const inArray = (arr, a) => {
+function computeOnlineOfflineList(
+  previous: Array<{ queue: string; name: string }>,
+  current: Array<{ queue: string; name: string }>,
+) {
+  const inArray = (arr: Array<{ queue: string; name: string }>, a: { queue: string; name: string }) => {
     for (const b of arr) {
       if (a.queue === b.queue && a.name === b.name) {
         return true;
@@ -69,7 +73,7 @@ function computeOnlineOfflineList(previous, current) {
     }
     return false;
   };
-  const arrayStrip = (arrA, arrB) => {
+  const arrayStrip = (arrA: Array<{ queue: string; name: string }>, arrB: Array<{ queue: string; name: string }>) => {
     return arrA.filter(a => !inArray(arrB, a));
   };
   const online = arrayStrip(current, previous);
@@ -78,7 +82,7 @@ function computeOnlineOfflineList(previous, current) {
 }
 
 export interface MonitorOptions {
-  interval: number;
+  interval?: number;
   redis: RedisOptions;
 }
 
@@ -90,15 +94,19 @@ export class Monitor extends EventEmitter {
   private readonly _interval: number;
   private _exited: boolean;
   private readonly _startedAt: number;
-  private readonly _lastChecked: number;
+  private _lastChecked: number;
   private readonly _lastCheckNotified: boolean;
-  private readonly _producers: string[];
-  private readonly _previousProducers: string[];
-  private readonly _consumers: string[];
-  private readonly _previousConsumers: string[];
+  private _producers: Array<{ queue: string; name: string }>;
+  private _previousProducers: Array<{ queue: string; name: string }>;
+  private _consumers: Array<{ queue: string; name: string }>;
+  private _previousConsumers: Array<{ queue: string; name: string }>;
   private readonly _autoCheckTid: NodeJS.Timeout;
   private _emitCounter: number;
   private readonly _debug: (...args: any) => void;
+  private _consumersOnline: Array<{ queue: string; name: string }> = [];
+  private _consumersOffline: Array<{ queue: string; name: string }> = [];
+  private _producersOnline: Array<{ queue: string; name: string }> = [];
+  private _producersOffline: Array<{ queue: string; name: string }> = [];
 
   /**
    * Constructor
@@ -149,7 +157,7 @@ export class Monitor extends EventEmitter {
    *
    * @param {Function} callback
    */
-  check(callback) {
+  public check(callback?: (err: Error | null, ret?: MonitorCheckResult) => void) {
     if (this._exited) return;
 
     if (utils.secondTimestamp() - this._lastChecked < this._interval) {
@@ -159,7 +167,7 @@ export class Monitor extends EventEmitter {
     const heartbeatKey = utils.getHeartbeatKey(this._fullRedisPrefix, "*");
     this._debug("checking: %s", heartbeatKey);
     this._redis.keys(heartbeatKey, (err, keys) => {
-      if (err) return callback(err);
+      if (err) return callback && callback(err);
 
       const producers = [];
       const consumers = [];
@@ -176,7 +184,7 @@ export class Monitor extends EventEmitter {
         }
       }
 
-      const emit = (event, list) => {
+      const emit = (event: string, list: any[]) => {
         if (this._emitCounter < 1) return this._debug("fist time emit, skip");
         for (const item of list) {
           this.emit(event, item);
@@ -207,8 +215,8 @@ export class Monitor extends EventEmitter {
     });
   }
 
-  _getCheckResult() {
-    function getArray(arr) {
+  private _getCheckResult() {
+    function getArray(arr: any[]) {
       return Array.isArray(arr) ? arr : [];
     }
 
@@ -246,7 +254,7 @@ export class Monitor extends EventEmitter {
         return callback(null, { producers: [], consumers: [] });
       }
 
-      this._redis.mget(...keys, (err: Error | null, values: string[]) => {
+      (this._redis as any).mget(...keys, (err: Error | null, values: string[]) => {
         if (err) return callback(err);
 
         const producers = [];
@@ -313,15 +321,15 @@ export class Monitor extends EventEmitter {
    *   - {String} name
    * @param {Function} callback
    */
-  public withdrawnProcessingQueue(info: { queue: string; name: string }, callback: (err: Error | null) => void) {
+  public withdrawnProcessingQueue(info: { queue: string; name: string }, callback?: (err: Error | null) => void) {
     const processingKey = utils.getProcessingQueueKey(this._redisPrefix, info.queue, info.name);
     const waitingKey = utils.getQueueKey(this._redisPrefix, info.queue);
     this._debug("withdrawnProcessingQueue: %s -> %s", processingKey, waitingKey);
 
     callback = callback || function() {};
     const next = (err: Error | null, ret: any) => {
-      if (err) return callback(err);
-      if (!ret) return callback(null);
+      if (err) return callback && callback(err);
+      if (!ret) return callback && callback(null);
       if (ret !== true) this._debug("withdrawnProcessingQueue: %s -> %s %s", processingKey, waitingKey, ret);
       this._redis.rpoplpush(processingKey, waitingKey, next);
     };
@@ -338,4 +346,9 @@ export class Monitor extends EventEmitter {
     this._redis.disconnect();
     callback && callback(null);
   }
+}
+
+export interface MonitorCheckResult {
+  consumer: { online: ConsumerInfo[]; offline: ConsumerInfo[] };
+  producer: { online: ProducerInfo[]; offline: ProducerInfo[] };
 }

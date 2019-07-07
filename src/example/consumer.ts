@@ -1,19 +1,17 @@
-'use strict';
-
 /**
  * super-queue example
  *
  * @authro Zongmin Lei <leizongmin@gmail.com>
  */
 
-const Consumer = require('../').Consumer;
+import { Consumer } from "../lib";
 
 const c = new Consumer({
-  queue: 'test1',
+  queue: "test1",
   redis: {
-    host: '127.0.0.1',
+    host: "127.0.0.1",
     port: 6379,
-    prefix: 'example:',
+    prefix: "example:",
   },
   capacity: 10,
 });
@@ -21,5 +19,5 @@ const c = new Consumer({
 c.listen(msg => {
   console.log(msg);
   // msg.resolve('fuck');
-  setTimeout(() => msg.resolve(`fuck ${ msg.data }`), Math.random() * 1000);
+  setTimeout(() => msg.resolve(`fuck ${msg.data}`), Math.random() * 1000);
 });
