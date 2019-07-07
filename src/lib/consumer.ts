@@ -193,7 +193,7 @@ export class Consumer extends EventEmitter {
    *
    * @param {Function} callback
    */
-  public exit(callback: (err: Error | null) => void) {
+  public exit(callback?: (err: Error | null) => void) {
     this._exited = true;
     clearInterval(this._heartbeatTid);
     this._redisPull.disconnect();
@@ -234,7 +234,7 @@ export class Message {
     this._isDone = false;
   }
 
-  public reject(err: Error) {
+  public reject(err: any) {
     if (this._isDone) return;
     clearTimeout(this._checkTimeoutTid!);
     this._isDone = true;

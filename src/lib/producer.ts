@@ -154,11 +154,11 @@ export class Producer extends EventEmitter {
    *   - {Number} maxAge
    * @param {Function}
    */
-  public push(info: { data: string; maxAge: number }, callback: (err: Error | null) => void) {
+  public push(info: { data: string; maxAge?: number }, callback: (err: Error | null, ret?: any) => void) {
     if (typeof info.data !== "string") {
       return callback(new TypeError("`data` must be string"));
     }
-    if ("maxAge" in info && !(info.maxAge >= 0)) {
+    if ("maxAge" in info && !(info.maxAge! >= 0)) {
       return callback(new TypeError("`maxAge` must be nonnegative number"));
     }
 
@@ -167,7 +167,7 @@ export class Producer extends EventEmitter {
     }
 
     info.maxAge = "maxAge" in info ? info.maxAge : this._maxAge;
-    const expire = info.maxAge > 0 ? utils.secondTimestamp() + info.maxAge : 0;
+    const expire = info.maxAge! > 0 ? utils.secondTimestamp() + info.maxAge! : 0;
 
     this._msgId += 1;
     const id = utils.integerToShortString(this._msgId);
@@ -193,7 +193,7 @@ export class Producer extends EventEmitter {
    *
    * @param {Function} callback
    */
-  public exit(callback: (err: Error | null) => void) {
+  public exit(callback?: (err: Error | null) => void) {
     this._exited = true;
     clearInterval(this._heartbeatTid);
     this._redis.disconnect();

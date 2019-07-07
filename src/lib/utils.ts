@@ -4,6 +4,7 @@
  * @authro Zongmin Lei <leizongmin@gmail.com>
  */
 
+import * as crypto from "crypto";
 import * as createDebug from "debug";
 import * as Redis from "ioredis";
 
@@ -32,13 +33,25 @@ export interface RedisOptions extends Redis.RedisOptions {
 }
 
 /**
+ * Returns md5
+ *
+ * @param {String} text
+ */
+export function md5(text: string) {
+  return crypto
+    .createHash("md5")
+    .update(text)
+    .digest("hex");
+}
+
+/**
  * Generate Client ID
  *
  * @param {String} type should be one of "producer", "consumer", "monitor"
  * @return {String}
  */
 export function generateClientId(type: string) {
-  return type.slice(0, 1).toUpperCase() + utils.md5(Date.now() + "" + Math.random()).slice(0, 9);
+  return type.slice(0, 1).toUpperCase() + md5(Date.now() + "" + Math.random()).slice(0, 9);
 }
 
 /**

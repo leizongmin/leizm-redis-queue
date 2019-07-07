@@ -93,9 +93,9 @@ export class Monitor extends EventEmitter {
   private readonly _fullRedisPrefix: string;
   private readonly _interval: number;
   private _exited: boolean;
-  private readonly _startedAt: number;
+  // private readonly _startedAt: number;
   private _lastChecked: number;
-  private readonly _lastCheckNotified: boolean;
+  // private readonly _lastCheckNotified: boolean;
   private _producers: Array<{ queue: string; name: string }>;
   private _previousProducers: Array<{ queue: string; name: string }>;
   private _consumers: Array<{ queue: string; name: string }>;
@@ -133,10 +133,10 @@ export class Monitor extends EventEmitter {
     this._interval = options.interval || 2;
 
     this._exited = false;
-    this._startedAt = utils.secondTimestamp();
+    // this._startedAt = utils.secondTimestamp();
 
     this._lastChecked = utils.secondTimestamp();
-    this._lastCheckNotified = false;
+    // this._lastCheckNotified = false;
     this._producers = [];
     this._previousProducers = [];
     this._consumers = [];
@@ -344,6 +344,7 @@ export class Monitor extends EventEmitter {
   public exit(callback: (err: Error | null) => void) {
     this._exited = true;
     this._redis.disconnect();
+    clearInterval(this._autoCheckTid);
     callback && callback(null);
   }
 }

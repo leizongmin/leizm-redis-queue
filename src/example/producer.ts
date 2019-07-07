@@ -19,22 +19,22 @@ const p = new Producer({
 p.on("start", () => {
   console.log("start");
 
-  let count = 0;
+  // let count = 0;
 
-  for (let i = 0; i < 1000; i++) {
-    setTimeout(() => {
-      p.push({
-        data: `hello ${i} times`,
-        maxAge: Math.random() * 2,
-      })
-        .then(ret => {
-          count++;
-          console.log(count, ret);
-        })
-        .catch(err => {
-          count++;
-          console.log(count, err);
-        });
-    }, Math.random() * 1000 + i * 10);
-  }
+  // for (let i = 0; i < 1000; i++) {
+  // setTimeout(() => {
+  //   p.push({
+  //     data: `hello ${i} times`,
+  //     maxAge: Math.random() * 2,
+  //   })
+  //     .then(ret => {
+  //       count++;
+  //       console.log(count, ret);
+  //     })
+  //     .catch(err => {
+  //       count++;
+  //       console.log(count, err);
+  //     });
+  // }, Math.random() * 1000 + i * 10);
+  // }
 });
